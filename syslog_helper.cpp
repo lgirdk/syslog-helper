@@ -21,15 +21,14 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <error.h>
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "syslog_helper.h"
-
 
 inline syslog_helper::syslog_helper()
 {
@@ -79,16 +78,13 @@ void syslog_helper::send_data(const char* data)
     gmtime_r(&now.tv_sec, &tm);
 
     tslen = strftime(stamp, sizeof(stamp), "%Y-%m-%dT%H:%M:%S", &tm);
-    tslen += snprintf((stamp+tslen), 7, ".%06d", now.tv_usec);
+    tslen += snprintf((stamp+tslen), 7, ".%06ld", (long) now.tv_usec);
 
     len = snprintf(log_buf, max_message_length, "<30>%.*s %s %s[%d]: %s", tslen, stamp, hostname, __progname, pid, data);   
     if (sendto(soc_fd, log_buf , len, 0,(struct sockaddr *) &client_addr, sizeof(client_addr)) != len )
     {
         fprintf(stderr, "[syslog_helper]: Failed to write data on %s !!!  \n", socket_stream_path);
     }
-
- 
-
 }
 
 syslog_helper::~syslog_helper()
