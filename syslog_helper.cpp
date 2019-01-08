@@ -68,7 +68,7 @@ void syslog_helper::send_data(const char* data)
     char stamp[32];
     int tslen = 0;
     int len = 0;
-
+    
     gettimeofday(&now, NULL);
     gmtime_r(&now.tv_sec, &tm);
 
@@ -76,9 +76,10 @@ void syslog_helper::send_data(const char* data)
     tslen += snprintf((stamp+tslen), 7, ".%06ld", (long) now.tv_usec);
 
     len = snprintf(log_buf, max_message_length, "<30>%.*s %s %s[%d]: %s", tslen, stamp, hostname, __progname, pid, data);   
-    if (sendto(soc_fd, log_buf , len, 0,(struct sockaddr *) &client_addr, sizeof(client_addr)) != len )
+    if (sendto(soc_fd, log_buf , len, MSG_DONTWAIT|MSG_NOSIGNAL,(struct sockaddr *) &client_addr, sizeof(client_addr)) < 0)
     {
-        fprintf(stderr, "[syslog_helper]: Failed to write data on %s !!!  \n", socket_stream_path);
+        perror("[syslog_helper]: ");
+        fprintf(stderr, "[syslog_helper]: Failed to write data on %s !!! \n", socket_stream_path);
     }
 }
 
